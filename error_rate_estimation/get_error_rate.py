@@ -1,0 +1,26 @@
+import sys
+
+query_lines = []
+
+total_length = 0
+total_error_count = 0
+
+with open(sys.argv[1], 'rt') as blast_hits:
+    for line in blast_hits:
+        line_parts = line.split('\t')
+        percent_identity = float(line_parts[2])
+        alignment_length = int(line_parts[3])
+
+        error_count = round(alignment_length * (100.0 - percent_identity) / 100.0)
+
+        total_length += alignment_length
+        total_error_count += error_count
+
+overall_percent_identity = 100.0 * (1.0 - (total_error_count / total_length))
+try:
+    mean_distance_between_errors = 1.0 / (1.0 - (overall_percent_identity / 100.0))
+    mean_distance_between_errors_str = str(round(mean_distance_between_errors))
+except ZeroDivisionError:
+    mean_distance_between_errors_str = 'inf'
+
+print('%.3f' % overall_percent_identity + '\t' + mean_distance_between_errors_str, flush=True, end='')
