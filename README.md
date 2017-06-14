@@ -71,6 +71,7 @@ This method for error rate estimation therefore only covers non-repetitive DNA. 
 ## Results: Illumina-only assemblies
 
 SPAdes command: `spades.py -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir --careful`
+
 Unicycler command: `unicycler -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir`
 
 | Assembler | Mean contigs | Mean N50 | Complete plasmids |
