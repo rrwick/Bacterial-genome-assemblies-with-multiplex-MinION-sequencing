@@ -1,4 +1,4 @@
-<p align="center"><img src="logo.png" alt="Kaptive" width="400"></p>
+<p align="center"><img src="logo.png" alt="Bacterial genome assemblies with multiplex-MinION sequencing"></p>
 
 This repository is linked to our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
 ](https://sdfosidhfsidfjaosdjiodifjodifjsdof). It involved sequencing 12 isolates of _Klebsiella pneumoniae_ on the Oxford Nanopore MinION using their native barcoding kit. Illumina reads previously existed for each of the isolates, enabling hybrid assembly. In the paper we share our methods, lessons learned and future considerations for using multiplex MinION sequencing to complete bacterial genomes.
