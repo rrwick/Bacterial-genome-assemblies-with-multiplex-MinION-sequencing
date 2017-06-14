@@ -73,34 +73,52 @@ SPAdes Illumina-only: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_
 
 SPAdes hybrid: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz --nanopore long.fastq.gz -o out_dir --careful`
 
+For SPAdes, the `contigs.fasta` file was taken as the final assembly.
+
 Unicycler Illumina-only: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir`
 
 Unicycler Nanopore-only: `unicycler -l long.fastq.gz -o out_dir`
 
 Unicycler hybrid: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -l long.fastq.gz -o out_dir`
 
+Canu Nanopore-only: `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
 
 
 ## Results: Illumina-only assemblies
 
+For these tests, 'Complete plasmids' is a measure of how many plasmids assembled completely into a single contig. For Unicycler, this means one plasmid with a circularising graph connection joining its start and end. For SPAdes this means a single contig which covers the whole plasmid (start-end overlap is okay but missing sequence is not). The total number of plasmids in the 12 isolates (57) was determined from the manually-completed assemblies.
+
 | Assembler | Mean contigs | Mean N50 | Complete plasmids |
-| :-----:   | -----------: | -------: | ----------------: |
-| SPAdes    |              |          |                   |
+| :-------: | -----------: | -------: | ----------------: |
+| SPAdes    |        379.1 |  218,479 |           17 / 57 |
 | Unicycler |        191.8 |  293,648 |           14 / 57 |
+
+Overall, Unicycler and SPAdes perform similarly when assembling the Illumina reads. It's worth remembering here that Unicycler uses SPAdes to assemble Illumina reads.
+
+The SPAdes mean contig count is greatly inflated by sample INF163 which has some low-depth contamination (which makes contigs in the SPAdes assembly but is filtered out in the Unicycler assembly). Excluding that sample, the mean contig count for SPAdes is 213.7, much closer to Unicycler's value.
+
+Unicycler achieves somewhat better N50 values because it uses a wider k-mer range than SPAdes does by default. Experimenting with larger values for SPAdes' `-k` option would probably result in N50 values like Unicycler's.
+
+SPAdes did slightly better than Unicycler at separating small plasmids from each other, but since its assembly is in contig form (not graph), it can be difficult to tell whether or not a contig is an entire replicon. Unicycler's assemblies are in graph form, so completed circular replicons are more obvious (graph segments which loop back on themselves).
 
 
 ## Results: Nanopore-only assemblies
 
-| Assembler | Mean contigs | Mean N50 | Complete chromosomes | Complete plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
-| :-------: | -----------: | -------: | -------------------: | ----------------: | ------------------------------------: | -------------------------------------: |
-| Canu      |              |          |               4 / 12 |           23 / 57 |                                1.249% |                                        |
-| Unicycler |              |          |               7 / 12 |           32 / 57 |                                1.029% |                                        |
+| Assembler | Mean N50  | Complete chromosomes | Complete plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
+| :-------: | --------: | -------------------: | ----------------: | ------------------------------------: | -------------------------------------: |
+| Canu      |           |               4 / 12 |           23 / 57 |                                1.249% |                                        |
+| Unicycler | 4,965,584 |               7 / 12 |           32 / 57 |                                1.029% |                                        |
+
+
+Unicycler recovered more small plasmids than Canu, but many small plasmids were still missing. Altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may improve its small-plasmid recovery.
+
+The estimated error rates of Unicycler's assemblies were lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies.
 
 
 ## Results: hybrid assemblies
 
-| Assembler  | Mean contigs | Mean N50 | Complete chromosomes | Complete plasmids | 100% complete | Estimated error rate |
-| :--------: | -----------: | -------: | -------------------: | ----------------: | ------------: | -------------------: |
-| SPAdes     |              |          |                      |                   |               |                      |
-| Canu+Pilon |              |          |                      |                   |               |                      |
-| Unicycler  |              |          |              12 / 12 |           46 / 57 |        7 / 12 |                      |
+| Assembler  | Mean N50 | Complete chromosomes | Complete plasmids | 100% complete | Estimated error rate |
+| :--------: | -------: | -------------------: | ----------------: | ------------: | -------------------: |
+| SPAdes     |          |                      |                   |               |                      |
+| Canu+Pilon |          |                      |                   |               |                      |
+| Unicycler  |          |              12 / 12 |           46 / 57 |        7 / 12 |                      |
