@@ -67,12 +67,21 @@ This method for error rate estimation therefore only covers non-repetitive DNA. 
 ## Reads per sample
 
 
+## Assembly commands
+
+SPAdes Illumina-only: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir --careful`
+
+SPAdes hybrid: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz --nanopore long.fastq.gz -o out_dir --careful`
+
+Unicycler Illumina-only: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir`
+
+Unicycler Nanopore-only: `unicycler -l long.fastq.gz -o out_dir`
+
+Unicycler hybrid: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -l long.fastq.gz -o out_dir`
+
+
 
 ## Results: Illumina-only assemblies
-
-SPAdes command: `spades.py -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir --careful`
-
-Unicycler command: `unicycler -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir`
 
 | Assembler | Mean contigs | Mean N50 | Complete plasmids |
 | :-----:   | -----------: | -------: | ----------------: |
