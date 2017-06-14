@@ -6,7 +6,7 @@ This repository is linked to our paper: [Completing bacterial genome assemblies 
 This repo contains the scripts used to generate our data and links to the reads and assemblies. If other researchers have different methods for data-preparation or assembly that they would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
 
 
-### Bash script 
+## Bash script
 
 The [ONT_barcode_basecalling_and_assembly.sh](ONT_barcode_basecalling_and_assembly.sh) script carries out the following steps:
 * Trimming Illumina reads
@@ -20,12 +20,12 @@ The [ONT_barcode_basecalling_and_assembly.sh](ONT_barcode_basecalling_and_assemb
 Each of these steps can be turned on/off using the variables at the top of the script. Details for some of the steps are described below.
 
 
-### Illumina read processing
+## Illumina read processing
 
 We used [Trim Galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) to trim adapter sequences from the Illumina reads and remove low-quality sequence. We used a conservative quality threshold of 10 - only removing particularly bad sequences.
 
 
-### Nanopore read processing
+## Nanopore read processing
 
 When basecalling Nanopore reads using Albacore (Oxford Nanopore's command-line basecaller), we used the `--barcoding` option to sort the reads into barcode bins. We then ran [Porechop](https://github.com/rrwick/Porechop) on each bin to remove adapter sequences and discard chimeric reads.
 
@@ -34,12 +34,12 @@ Notably, when running Porechop we used its barcode binning as well. This was so 
 All reads shorter than 2 kbp were discarded for each sample - due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality - specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
 
 
-### Polishing with Nanopolish
+## Polishing with Nanopolish
 
 We used Nanopolish on the Nanopore-only assemblies to get their base-level accuracy as high as possible. For this step we used all Nanopore reads for which Albacore and Porechop agreed on the barcode bin (before the read sets were subsampled to 500 Mbp). After using `nanopolish extract` to produce a fasta file from Albacore's output directory, we used [this script](nanopolish_read_filter.py) to exclude reads where Porechop disagreed on the bin.
 
 
-### Error rate estimation
+## Error rate estimation
 
 To estimate error rates, we:
 * took the 25 largest contigs from Unicycler's Illumina-only assembly
@@ -54,7 +54,7 @@ We used this method because we trust the base calls in an Illumina-only assembly
 This method for error rate estimation therefore only covers non-repetitive DNA. Error rates in repetitive regions will quite possibly be higher.
 
 
-### Software versions used
+## Software versions used
 
 * Albacore: v1.1.2
 * [Porechop](https://github.com/rrwick/Porechop): v0.2.1
@@ -64,33 +64,33 @@ This method for error rate estimation therefore only covers non-repetitive DNA. 
 * [Pilon](https://github.com/broadinstitute/pilon): v1.22
 
 
-### Reads per sample
+## Reads per sample
 
 
 
-### Results: SPAdes (Illumina-only)
+## Results: Illumina-only assemblies
+
+SPAdes command: `spades.py -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir --careful`
+Unicycler command: `unicycler -1 *_1.fq.gz -2 *_2.fq.gz -o out_dir`
+
+| Assembler | Mean contigs | Mean N50 | Complete plasmids |
+| :-----:   | -----------: | -------: | ----------------: |
+| SPAdes    |              |          |                   |
+| Unicycler |        191.8 |  293,648 |           14 / 57 |
 
 
-### Results: Unicycler (Illumina-only)
+## Results: Nanopore-only assemblies
+
+| Assembler | Mean contigs | Mean N50 | Complete chromosomes | Complete plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
+| :-------: | -----------: | -------: | -------------------: | ----------------: | ------------------------------------: | -------------------------------------: |
+| Canu      |              |          |               4 / 12 |           23 / 57 |                                1.249% |                                        |
+| Unicycler |              |          |               7 / 12 |           32 / 57 |                                1.029% |                                        |
 
 
-### Results: Canu (Nanopore-only)
+## Results: hybrid assemblies
 
-
-### Results: Canu (Nanopore-only) then Nanopolish
-
-
-### Results: Unicycler (Nanopore-only)
-
-
-### Results: Unicycler (Nanopore-only) then Nanopolish
-
-
-### Results: SPAdes (hybrid Illumina+Nanopore)
-
-
-### Results: Unicycler (hybrid Illumina+Nanopore)
-
-
-### Results: Canu (Nanopore-only) then Pilon polish (with Illumina)
-
+| Assembler  | Mean contigs | Mean N50 | Complete chromosomes | Complete plasmids | 100% complete | Estimated error rate |
+| :--------: | -----------: | -------: | -------------------: | ----------------: | ------------: | -------------------: |
+| SPAdes     |              |          |                      |                   |               |                      |
+| Canu+Pilon |              |          |                      |                   |               |                      |
+| Unicycler  |              |          |              12 / 12 |           46 / 57 |        7 / 12 |                      |
