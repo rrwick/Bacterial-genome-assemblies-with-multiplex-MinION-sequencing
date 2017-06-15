@@ -88,7 +88,7 @@ Canu Nanopore-only: `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.
 
 Metrics:
 * Mean contigs: the number of contigs in the assembly, averaged over all 12 samples (fewer is better).
-* Mean N50: the assembly N50, averaged over all 12 samples (more is better). Illumina-only assemblies almost never complete on their own, so this value is much less than the chromosome size.
+* Mean N50: the assembly N50, averaged over all 12 samples (bigger is better). Illumina-only assemblies almost never complete on their own, so this value is much less than the chromosome size.
 * Complete large/small plasmids: how many plasmids completely assembled into a single contig, totaled over all 12 samples. For Unicycler, 'completely assembled' means the plasmid is circularised in the graph (i.e. a link joining its start and end). Large plasmids were defined as over 10 kbp (though there were no plasmids between 7 and 60 kbp). The total number of plasmids in the 12 isolates (28 large, 29 small) was determined from the manually-completed assemblies. The completed plasmid counts aren't available for SPAdes, as it outputs its final assembly in contig form, not as a graph, so there's no easy _de novo_ way to tell if a contig is a complete replicon.
 
 | Assembler | Mean contigs | Mean N50 | Complete large plasmids | Complete small plasmids |
@@ -108,23 +108,29 @@ As expected for short reads, neither assembler was very good at completing large
 ## Results: Nanopore-only assemblies
 
 Metrics:
-* Mean N50: the mean assembly N50 over all 12 samples (more is better). When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
+* Mean N50: as described above. When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
 * Complete chromosomes: how many chromosomes completely assembled into a single contig, totaled over all 12 samples. For both Unicycler and Canu, 'completely assembled' means the chromosome is circularised in the graph.
-* Complete plasmids: same as described above for Illumina-only assemblies
-* Estimated error rate (pre-Nanopolish): error rate of the assembly as it comes out of the assembler. The method for error rate estimation is described above.
-* Estimated error rate (post-Nanopolish): error rate of the assembly after a pass through Nanopolish. Nanopolish uses some lower-level data in the read files to polish the assembly more effectively 
+* Complete large/small plasmids: as described above
+* Estimated error rate: estimate of the assembly's base-level error rate - method described above.
 
 | Assembler | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
 | :-------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------------------------------: | -------------------------------------: |
 | Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                                1.249% |                                        |
 | Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.029% |                                        |
 
-Neither Canu nor Unicycler was particular good recovering small plasmids. This is possibly because the small plasmids are very underrepresented in the Nanopore reads, possibly due to the library prep. Unicycler got a few small plasmids and Canu didn't get any, but altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may improve its small-plasmid recovery.
+Neither Canu nor Unicycler was particular good recovering small plasmids. This may be because the small plasmids are very underrepresented in the Nanopore reads, possibly due to the library prep. Unicycler did manage to assemble a few small plasmids. Canu didn't get any, but altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may help.
 
 The estimated error rates of Unicycler's assemblies were lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies.
 
 
 ## Results: hybrid assemblies
+
+Metrics:
+* Mean N50: as described above
+* Complete chromosomes: as described above
+* Complete large/small plasmids: as described above
+* 100% complete: how many of the assemblies have a complete chromosome and all plasmids are complete.
+* Estimated error rate: as described above
 
 | Assembler  | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | 100% complete | Estimated error rate |
 | :--------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------: | -------------------: |
