@@ -1,6 +1,6 @@
 # This script assumes these two directories already exist
-RAW_ILLUMINA=01_raw_illumina_reads            # Should have subdirectories named barcode01, barcode02, etc, with *_1.fastq.gz and *_2.fastq.gz in each.
-NANOPORE_FAST5S=02_nanopore_fast5_files       # Should have the raw (before basecalling) Nanopore *.fast5 files (can be nested in multipled directories).
+RAW_ILLUMINA=illumina_reads/raw               # Should have subdirectories named barcode01, barcode02, etc, with *_1.fastq.gz and *_2.fastq.gz in each.
+NANOPORE_FAST5S=nanopore_reads/raw_fast5      # Should have the raw (before basecalling) Nanopore *.fast5 files (can be nested in multipled directories).
 
 # This step is necessary for Illumina-only and hybrid assemblies.
 TRIM_ILLUMINA_READS=true                      # Runs Trim Galore to trim adapters from the Illumina reads and do a some conservative quality trimming.
@@ -31,22 +31,22 @@ NANOPOLISH_UNICYCLER_NANOPORE_ASSEMBLY=true   # Run Nanopolish on the Nanopore-o
 PILON_CANU_ASSEMBLY=true                      # Run Pilon on the Canu assembly.
 
 # The script will make these directories, as necessary.
-TRIMMED_ILLUMINA=03_trimmed_illumina_reads
-BASECALLED_NANOPORE=04_basecalled_nanopore_reads_fastq
-BASECALLED_NANOPORE_FAST5_FILES=05_basecalled_nanopore_reads_fast5
-RAW_NANOPORE=06_raw_nanopore_reads
-TRIMMED_NANOPORE=07_trimmed_nanopore_reads
-SUBSAMPLED_NANOPORE=08_subsampled_nanopore_reads
-READS_FOR_NANOPOLISH=09_nanopore_reads_for_nanopolish
-UNICYCLER_ILLUMINA_ASSEMBLIES=10_unicycler_illumina_only_assemblies
-SPADES_ILLUMINA_ASSEMBLIES=11_spades_illumina_only_assemblies
-CANU_NANOPORE_ASSEMBLIES=12_canu_long_read_only_assemblies
-NANOPOLISHED_CANU_ASSEMBLIES=13_nanopolish_canu_assemblies
-UNICYCLER_NANOPORE_ASSEMBLIES=14_unicycler_long_read_only_assemblies
-NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES=15_nanopolish_unicycler_long_read_only_assemblies
-UNICYCLER_HYBRID_ASSEMBLIES=16_unicycler_hybrid_assemblies
-SPADES_HYBRID_ASSEMBLIES=17_spades_hybrid_assemblies
-PILON_POLISHED_CANU_ASSEMBLIES=18_pilon_polished_canu_assemblies
+TRIMMED_ILLUMINA=illumina_reads/trimmed
+BASECALLED_NANOPORE_FASTQ=nanopore_reads/basecalling/to_fastq
+BASECALLED_NANOPORE_FAST5=nanopore_reads/basecalling/to_fast5
+RAW_NANOPORE=nanopore_reads/fastq/1_raw
+TRIMMED_NANOPORE=nanopore_reads/fastq/2_trimmed
+SUBSAMPLED_NANOPORE=nanopore_reads/fastq/3_subsampled
+READS_FOR_NANOPOLISH=nanopore_reads/for_nanopolish
+UNICYCLER_ILLUMINA_ASSEMBLIES=assemblies/illumina_only/unicycler
+SPADES_ILLUMINA_ASSEMBLIES=assemblies/illumina_only/spades
+CANU_NANOPORE_ASSEMBLIES=assemblies/nanopore_only/canu
+NANOPOLISHED_CANU_ASSEMBLIES=assemblies/nanopore_only/canu_nanopolish
+UNICYCLER_NANOPORE_ASSEMBLIES=assemblies/nanopore_only/unicycler
+NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES=assemblies/nanopore_only/unicycler_nanopolish
+UNICYCLER_HYBRID_ASSEMBLIES=assemblies/hybrid/unicycler
+SPADES_HYBRID_ASSEMBLIES=assemblies/hybrid/spades
+PILON_POLISHED_CANU_ASSEMBLIES=assemblies/hybrid/canu_pilon
 
 
 # Adjust the thread count as appropriate for the hardware.
@@ -68,34 +68,34 @@ GENOME_SIZE=5.5m
 
 # Basecall the Nanopore reads using Albacore (with direct-to-fastq basecalling).
 if $ALBACORE_BASECALLING; then
-    read_fast5_basecaller.py --input $NANOPORE_FAST5S --recursive --worker_threads $THREADS --save_path $BASECALLED_NANOPORE --barcoding --flowcell FLO-MIN106 --kit SQK-LSK108 --output_format fastq --reads_per_fastq_batch 100000000
+    read_fast5_basecaller.py --input $NANOPORE_FAST5S --recursive --worker_threads $THREADS --save_path $BASECALLED_NANOPORE_FASTQ --barcoding --flowcell FLO-MIN106 --kit SQK-LSK108 --output_format fastq --reads_per_fastq_batch 100000000
 fi
 
-# Basecall the Nanopore reads using Albacore, saving 
+# Basecall the Nanopore reads using Albacore, saving them as fast5 files suitable for Nanopolish.
 if $ALBACORE_BASECALLING_TO_FAST5; then
-    read_fast5_basecaller.py --input $NANOPORE_FAST5S --recursive --worker_threads $THREADS --save_path $BASECALLED_NANOPORE_FAST5_FILES --barcoding --flowcell FLO-MIN106 --kit SQK-LSK108 --output_format fast5
+    read_fast5_basecaller.py --input $NANOPORE_FAST5S --recursive --worker_threads $THREADS --save_path $BASECALLED_NANOPORE_FAST5 --barcoding --flowcell FLO-MIN106 --kit SQK-LSK108 --output_format fast5
 fi
 
 for BARCODE_NUMBER in 01 02 03 04 05 06 07 08 09 10 11 12; do
     BARCODE=barcode$BARCODE_NUMBER
 
-    if $TRIM_NANOPORE_READS; then
+    if $TRIM_ILLUMINA_READS; then
         mkdir -p $TRIMMED_ILLUMINA/$BARCODE
         trim_galore --paired --quality 10 --output_dir $TRIMMED_ILLUMINA/$BARCODE $RAW_ILLUMINA/$BARCODE/*_1.fastq.gz $RAW_ILLUMINA/$BARCODE/*_2.fastq.gz
     fi
 
     if $GATHER_UP_NANOPORE_FASTQS; then
         mkdir -p $RAW_NANOPORE
-        # Albacore sometimes newlines between fastq records, so I use grep to only get non-empty lines.
+        # Some versions of Albacore put newlines between fastq records, so we use grep to only get non-empty lines.
         # This step also serves to group each barcode bin into a single fastq if there are more than one (Albacore makes a separate file for each run ID).
-        grep -h . $BASECALLED_NANOPORE/workspace/$BARCODE/*.fastq | gzip > $RAW_NANOPORE/$BARCODE.fastq.gz
+        grep -h . $BASECALLED_NANOPORE_FASTQ/workspace/$BARCODE/*.fastq | gzip > $RAW_NANOPORE/$BARCODE.fastq.gz
     fi
 
     if $TRIM_NANOPORE_READS; then
         mkdir -p $TRIMMED_NANOPORE
         # Even though Albacore already sorted the reads into barcode bins, I'm running Porechop with barcode binning on.
         # This is so I can exclude reads where Porechop and Albacore disagree on the proper barcode bin.
-        porechop -i $RAW_NANOPORE/$BARCODE.fastq.gz -b $TRIMMED_NANOPORE/$BARCODE --threads $THREADS --verbosity 2
+        porechop -i $RAW_NANOPORE/$BARCODE.fastq.gz -b $TRIMMED_NANOPORE/$BARCODE --threads $THREADS
         zless $TRIMMED_NANOPORE/$BARCODE/BC$BARCODE_NUMBER.fastq.gz | paste - - - - | cut -f 2 | awk '{ print length($0); }' > $TRIMMED_NANOPORE/$BARCODE"_read_lengths"
     fi
 
@@ -136,14 +136,14 @@ for BARCODE_NUMBER in 01 02 03 04 05 06 07 08 09 10 11 12; do
 
     if $PREPARE_NANOPOLISH_READS; then
         mkdir -p $READS_FOR_NANOPOLISH
-        nanopolish extract --recurse --type template $BASECALLED_NANOPORE_FAST5_FILES/workspace/$BARCODE/ > $READS_FOR_NANOPOLISH/$BARCODE"_before_filter.fasta"
+        nanopolish extract --recurse --type template $BASECALLED_NANOPORE_FAST5/workspace/$BARCODE/ > $READS_FOR_NANOPOLISH/$BARCODE"_before_filter.fasta"
         python3 nanopolish_read_filter.py $READS_FOR_NANOPOLISH/$BARCODE"_before_filter.fasta" $TRIMMED_NANOPORE/$BARCODE/BC$BARCODE_NUMBER.fastq.gz > $READS_FOR_NANOPOLISH/$BARCODE.fasta
     fi
 
     if $NANOPOLISH_UNICYCLER_NANOPORE_ASSEMBLY; then
         mkdir -p $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE
         bwa index $UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/assembly.fasta
-        bwa mem -x ont2d -t 8 $UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/assembly.fasta $READS_FOR_NANOPOLISH/$BARCODE.fasta | samtools sort -o $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/reads.sorted.bam -T reads.tmp -
+        bwa mem -x ont2d -t $THREADS $UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/assembly.fasta $READS_FOR_NANOPOLISH/$BARCODE.fasta | samtools sort -o $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/reads.sorted.bam -T reads.tmp -
         samtools index $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/reads.sorted.bam
         python ~/nanopolish/scripts/nanopolish_makerange.py $UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/assembly.fasta | parallel --results $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/nanopolish.results -P $NANOPOLISH_PROCESSES nanopolish variants --consensus $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/polished.{1}.fa -w {1} -r $READS_FOR_NANOPOLISH/$BARCODE.fasta -b $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/reads.sorted.bam -g $UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/assembly.fasta -t $NANOPOLISH_THREADS_PER_PROCESS --min-candidate-frequency 0.1
         python ~/nanopolish/scripts/nanopolish_merge.py $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/polished.*.fa > $NANOPOLISHED_UNICYCLER_NANOPORE_ASSEMBLIES/$BARCODE/polished_genome.fa
@@ -153,7 +153,7 @@ for BARCODE_NUMBER in 01 02 03 04 05 06 07 08 09 10 11 12; do
     if $NANOPOLISH_CANU_ASSEMBLY; then
         mkdir -p $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE
         bwa index $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta
-        bwa mem -x ont2d -t 8 $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta $READS_FOR_NANOPOLISH/$BARCODE.fasta | samtools sort -o $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/reads.sorted.bam -T reads.tmp -
+        bwa mem -x ont2d -t $THREADS $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta $READS_FOR_NANOPOLISH/$BARCODE.fasta | samtools sort -o $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/reads.sorted.bam -T reads.tmp -
         samtools index $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/reads.sorted.bam
         python ~/nanopolish/scripts/nanopolish_makerange.py $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta | parallel --results $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/nanopolish.results -P $NANOPOLISH_PROCESSES nanopolish variants --consensus $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/polished.{1}.fa -w {1} -r $READS_FOR_NANOPOLISH/$BARCODE.fasta -b $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/reads.sorted.bam -g $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta -t $NANOPOLISH_THREADS_PER_PROCESS --min-candidate-frequency 0.1
         python ~/nanopolish/scripts/nanopolish_merge.py $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/polished.*.fa > $NANOPOLISHED_CANU_ASSEMBLIES/$BARCODE/polished_genome.fa
