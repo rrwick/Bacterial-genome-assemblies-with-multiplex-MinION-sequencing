@@ -162,11 +162,16 @@ for BARCODE_NUMBER in 01 02 03 04 05 06 07 08 09 10 11 12; do
 
     if $PILON_CANU_ASSEMBLY; then
         mkdir -p $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE
-        bowtie2-build $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta
-        bowtie2 --local --very-sensitive-local --threads $THREADS -I 0 -X 2000 -x $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta -S $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments.sam -1 $TRIMMED_ILLUMINA/$BARCODE/*_1.fq.gz -2 $TRIMMED_ILLUMINA/$BARCODE/*_2.fq.gz
-        samtools sort -o $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments.bam -O bam -T temp $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments.sam
-        samtools index $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments.bam
-        java -jar ~/pilon-1.22.jar --genome $CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta --frags $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments.bam --changes --output pilon --outdir $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE --fix all
+        INPUT_FASTA=$CANU_NANOPORE_ASSEMBLIES/$BARCODE/canu.contigs.fasta
+
+        for PILON_ROUND in 1 2 3 4 5; do
+            bowtie2-build $INPUT_FASTA $INPUT_FASTA
+            BAM=$PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/alignments_"$PILON_ROUND".bam
+            bowtie2 --local --very-sensitive-local --threads $THREADS -I 0 -X 2000 -x $INPUT_FASTA -1 $TRIMMED_ILLUMINA/$BARCODE/*_1.fq.gz -2 $TRIMMED_ILLUMINA/$BARCODE/*_2.fq.gz | samtools sort -o $BAM -T reads.tmp -
+            samtools index $BAM
+            java -jar ~/pilon-1.22.jar --genome $INPUT_FASTA --frags $BAM --changes --output pilon_round_"$PILON_ROUND" --outdir $PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE --fix all
+            INPUT_FASTA=$PILON_POLISHED_CANU_ASSEMBLIES/$BARCODE/pilon_round_"$PILON_ROUND".fasta
+        done
     fi
 
 done

@@ -1,31 +1,41 @@
 <p align="center"><img src="logo.png" alt="Bacterial genome assemblies with multiplex-MinION sequencing"></p>
 
-This repository is linked to our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
-](https://sdfosidhfsidfjaosdjiodifjodifjsdof). It involved sequencing 12 isolates of _Klebsiella pneumoniae_ on the Oxford Nanopore MinION using their native barcoding kit. Illumina reads previously existed for each of the isolates, enabling hybrid assembly. In the paper we share our methods, lessons learned and future considerations for using multiplex MinION sequencing to complete bacterial genomes.
+This repository contains data and results for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
+](https://sdfosidhfsidfjaosdjiodifjodifjsdof). We sequenced 12 isolates of _Klebsiella pneumoniae_ on the Oxford Nanopore MinION using their native barcoding kit. Illumina reads previously existed for each of the isolates, enabling hybrid assembly. In the paper we share our methods, lessons learned and future considerations for using multiplex MinION sequencing to complete bacterial genomes.
 
-This repo contains the scripts used to generate our data and links to the reads and assemblies. If other researchers have different methods for data-preparation or assembly that they would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
+This repo contains the scripts used to generate our data, links to the reads and assemblies, and summaries of our results. If other researchers have different methods for data-preparation or assembly that they would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
 
 
-## Bash script
+## Basecalling and assembly
 
 The [ONT_barcode_basecalling_and_assembly.sh](ONT_barcode_basecalling_and_assembly.sh) script carries out the following steps:
 * Trimming Illumina reads
 * Basecalling Nanopore reads
 * Trimming and subsampling Nanopore reads
-* Assembling Illumina-only read sets
-* Assembling Nanopore-only read sets
-* Assembling hybrid read sets
+* Assembling Illumina-only read sets (with SPAdes and Unicycler)
+* Assembling Nanopore-only read sets (with Canu and Unicycler)
+* Assembling hybrid read sets (with SPAdes, Canu+Pilon and Unicycler)
 * Polishing Nanopore-only assemblies with [Nanopolish](https://github.com/jts/nanopolish)
 
 Each of these steps can be turned on/off using the variables at the top of the script. Details for some of the steps are described below.
 
 
-## Illumina read processing
+#### Software versions used
 
-We used [Trim Galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) to trim adapter sequences from the Illumina reads and remove low-quality sequence. We used a conservative quality threshold of 10 - only removing particularly bad sequences.
+* Albacore: v1.1.2
+* [Porechop](https://github.com/rrwick/Porechop): v0.2.1
+* [Unicycler](https://github.com/rrwick/Unicycler): [commit 751cdaa](https://github.com/rrwick/Unicycler/tree/751cdaa28c65ffd87ec331d3424a80bc338cfbfa) (a pre-release version of Unicycler v0.4)
+* [Canu](http://canu.readthedocs.io/en/latest/): [snapshot v1.5 +54 changes](https://github.com/marbl/canu/tree/f356c2c3f2eb37b53c4e7bf11e927e3fdff4d747)
+* [SPades](http://cab.spbu.ru/software/spades/): v3.10.1
+* [Pilon](https://github.com/broadinstitute/pilon): v1.22
 
 
-## Nanopore read processing
+#### Illumina read trimming
+
+We used [Trim Galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) to trim adapter sequences from the Illumina reads and remove low-quality sequence. We used a conservative quality threshold of 10 to only remove particularly bad sequences.
+
+
+#### Nanopore read processing
 
 When basecalling Nanopore reads using Albacore (Oxford Nanopore's command-line basecaller), we used the `--barcoding` option to sort the reads into barcode bins. We then ran [Porechop](https://github.com/rrwick/Porechop) on each bin to remove adapter sequences and discard chimeric reads.
 
@@ -34,9 +44,38 @@ Notably, when running Porechop we used its barcode binning as well. This was so 
 All reads shorter than 2 kbp were discarded for each sample - due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality - specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
 
 
-## Polishing with Nanopolish
+#### Illumina-only assembly commands
+* SPAdes: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir --careful`
+* Unicycler: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir`
+
+For SPAdes, the `contigs.fasta` file was taken as the final assembly.
+
+
+#### Nanopore-only assembly commands
+* Canu: `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
+* Unicycler: `unicycler -l long.fastq.gz -o out_dir`
+
+
+#### Hybrid assembly commands
+* SPAdes: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz --nanopore long.fastq.gz -o out_dir --careful`
+* Canu+Pilon:
+  * `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
+  * Then fives rounds of Pilon:
+    * `bowtie2 --local --very-sensitive-local -I 0 -X 2000 -x before_polish.fasta -1 short_1.fastq.gz -2 short_2.fastq.gz | samtools sort -o alignments.bam -T reads.tmp -; samtools index alignments.bam`
+    * `java -jar ~/pilon-1.22.jar --genome before_polish.fasta --frags alignments.bam --changes --output after_polish --outdir out_dir --fix all`
+* Unicycler: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -l long.fastq.gz -o out_dir`
+
+
+#### Polishing with Nanopolish
 
 We used Nanopolish on the Nanopore-only assemblies to get their base-level accuracy as high as possible. For this step we used all Nanopore reads for which Albacore and Porechop agreed on the barcode bin (before the read sets were subsampled to 500 Mbp). After using `nanopolish extract` to produce a fasta file from Albacore's output directory, we used [this script](nanopolish_read_filter.py) to exclude reads where Porechop disagreed on the bin.
+
+
+
+## Depth per replicon
+
+The files in the [error_rate_estimation](error_rate_estimation) directory were used to generate the supplementary figure showing the read depth for each replicon. This demonstrates that small plasmids were very underrepresented in the Nanopore reads.
+
 
 
 ## Error rate estimation
@@ -51,37 +90,8 @@ The code to carry this out is in the [error_rate_estimation](error_rate_estimati
 
 We used this method because we trust the base calls in an Illumina-only assembly for non-repetitive sequence. By taking only the largest Illumina-only contigs, we avoid repeat sequences. Since these contigs usually end in repeat sequences (repeats being the most common contig-length-limiting feature for Illumina-only assembly), we trim off a kilobase of sequence to ensure our test sequences are not too close to a repeat.
 
-This method for error rate estimation therefore only covers non-repetitive DNA. Error rates in repetitive regions will quite possibly be higher.
+This method for error rate estimation therefore only covers non-repetitive DNA. Error rates in repetitive regions will possibly be higher.
 
-
-## Software versions used
-
-* Albacore: v1.1.2
-* [Porechop](https://github.com/rrwick/Porechop): v0.2.1
-* [Unicycler](https://github.com/rrwick/Unicycler): [commit 751cdaa](https://github.com/rrwick/Unicycler/tree/751cdaa28c65ffd87ec331d3424a80bc338cfbfa) (a pre-release version of Unicycler v0.4)
-* [Canu](http://canu.readthedocs.io/en/latest/): [snapshot v1.5 +54 changes](https://github.com/marbl/canu/tree/f356c2c3f2eb37b53c4e7bf11e927e3fdff4d747)
-* [SPades](http://cab.spbu.ru/software/spades/): v3.10.1
-* [Pilon](https://github.com/broadinstitute/pilon): v1.22
-
-
-## Reads per sample
-
-
-## Assembly commands
-
-SPAdes Illumina-only: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir --careful`
-
-SPAdes hybrid: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz --nanopore long.fastq.gz -o out_dir --careful`
-
-For SPAdes, the `contigs.fasta` file was taken as the final assembly.
-
-Unicycler Illumina-only: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir`
-
-Unicycler Nanopore-only: `unicycler -l long.fastq.gz -o out_dir`
-
-Unicycler hybrid: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -l long.fastq.gz -o out_dir`
-
-Canu Nanopore-only: `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
 
 
 ## Results: Illumina-only assemblies
@@ -115,8 +125,8 @@ Metrics:
 
 | Assembler | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
 | :-------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------------------------------: | -------------------------------------: |
-| Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                                1.249% |                                        |
-| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.029% |                                        |
+| Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                                1.249% |                            IN PROGRESS |
+| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.029% |                            IN PROGRESS |
 
 Neither Canu nor Unicycler was particular good recovering small plasmids. This may be because the small plasmids are very underrepresented in the Nanopore reads, possibly due to the library prep. Unicycler did manage to assemble a few small plasmids. Canu didn't get any, but altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may help.
 
@@ -134,6 +144,14 @@ Metrics:
 
 | Assembler  | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | 100% complete | Estimated error rate |
 | :--------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------: | -------------------: |
-| SPAdes     | 4,391,534 |                  n/a |                     n/a |                     n/a |           n/a |                      |
-| Canu+Pilon |           |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |                      |
-| Unicycler  | 5,334,509 |              12 / 12 |                 28 / 28 |                 18 / 29 |        7 / 12 |                      |
+| SPAdes     | 4,391,534 |                  n/a |                     n/a |                     n/a |           n/a |              0.0017% |
+| Canu+Pilon | 4,831,660 |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |              0.0041% |
+| Unicycler  | 5,334,509 |              12 / 12 |                 28 / 28 |                 18 / 29 |        7 / 12 |              0.0000% |
+
+As was the case for Illumina-only assemblies, since SPAdes doesn't provide its final assembly in graph form, it is difficult to tell whether or not a contig represents a complete replicon. It was therefore excluded from the 'complete' counts. SPAdes' N50 values reflect that it often but not always assembled the chromosome into a single contig.
+
+Since the Canu+Pilon assemblies are just polished versions of the Canu Nanopore-only assemblies, the 'complete' counts are unchanged. The mean N50 for Canu+Pilon is slightly higher than it was for Canu, revealing that Pilon is inserting bases more often than removing them.
+
+Unicycler does quite well here because hybrid assemblies are its primary focus. Of its five assemblies which did not complete 100%, four were due to incomplete small plasmids. Small plasmids were very underrepresented in the Nanopore reads, and Unicycler failed to separate small plasmids with shared sequence. The remaining incomplete assembly (sample INF164) was due to a discrepancy between the Illumina and Nanopore reads - an 18 kbp sequence was present in the Illumina sample but absent in the Nanopore sample, causing an incomplete component in the assembly graph.
+
+The estimated error rates are low for all hybrid assembly methods. While Unicycler's error rate was the lowest, the results are close enough that I wouldn't be willing to explain the discrepancy without a deeper invetigation. The Canu+Pilon error rate decreased with the first couple rounds of Pilon polishing but plateaued after 3-4 rounds. The values show here are after 5 rounds of Pilon polishing.

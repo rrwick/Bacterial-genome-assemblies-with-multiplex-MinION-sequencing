@@ -17,10 +17,12 @@ with open(sys.argv[1], 'rt') as blast_hits:
         total_error_count += error_count
 
 overall_percent_identity = 100.0 * (1.0 - (total_error_count / total_length))
+overall_error_rate = 100.0 - overall_percent_identity
+
 try:
     mean_distance_between_errors = 1.0 / (1.0 - (overall_percent_identity / 100.0))
     mean_distance_between_errors_str = str(round(mean_distance_between_errors))
 except ZeroDivisionError:
     mean_distance_between_errors_str = 'inf'
 
-print('%.3f' % overall_percent_identity + '\t' + mean_distance_between_errors_str, flush=True, end='')
+print('%.4f' % overall_percent_identity + '\t' + '%.4f' % overall_error_rate + '\t' + mean_distance_between_errors_str, flush=True, end='')
