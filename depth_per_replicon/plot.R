@@ -1,5 +1,6 @@
 library(ggplot2)
 library(readr)
+library(reshape2)
 
 results <- read_delim("~/Dropbox/Uni_research/Projects/Completing_genomes_with_Nanopore_paper/github_repo_with_code_and_results/depth_per_replicon/results", "\t", escape_double = FALSE, trim_ws = TRUE)
 results <- subset(results, select=c("Size", "Illumina depth (normalised)", "Nanopore depth (normalised)"))

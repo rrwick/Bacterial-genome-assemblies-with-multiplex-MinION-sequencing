@@ -1,9 +1,9 @@
 <p align="center"><img src="logo.png" alt="Bacterial genome assemblies with multiplex-MinION sequencing"></p>
 
-This repository contains data and results for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
+This repository supplemental data and code for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
 ](https://sdfosidhfsidfjaosdjiodifjodifjsdof). We sequenced 12 isolates of _Klebsiella pneumoniae_ on the Oxford Nanopore MinION using their native barcoding kit. Illumina reads previously existed for each of the isolates, enabling hybrid assembly. In the paper we share our methods, lessons learned and future considerations for using multiplex MinION sequencing to complete bacterial genomes.
 
-This repo contains the scripts used to generate our data, links to the reads and assemblies, and summaries of our results. If other researchers have different methods for data-preparation or assembly that they would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
+This repo contains the scripts used to generate our data, links to the reads and assemblies, and summaries of our results. It also contains assembly metrics for other assemblers not mentioned in the paper. If other researchers have different assembly methods that they would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
 
 
 ## Basecalling and assembly
@@ -74,7 +74,7 @@ We used Nanopolish on the Nanopore-only assemblies to get their base-level accur
 
 ## Depth per replicon
 
-The files in the [error_rate_estimation](error_rate_estimation) directory were used to generate the supplementary figure showing the read depth for each replicon. This demonstrates that small plasmids were very underrepresented in the Nanopore reads.
+The files in the [depth_per_replicon](depth_per_replicon) directory were used to generate the supplementary figure showing the read depth for each replicon. This demonstrates that small plasmids were very underrepresented in the Nanopore reads.
 
 
 
