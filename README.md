@@ -4,7 +4,7 @@
 
 This repository contains supplemental data and code for our paper: Completing bacterial genome assemblies with multiplex MinION sequencing.
 
-Here you will find the scripts used to generate our data and figures, links to the reads and assemblies, and summaries of our results. We have also included results from other assemblers not mentioned in the paper to facilitate comparison. If you have different assembly methods that you would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
+Here you will find scripts used to generate our data and figures, links to the reads and assemblies, and summaries of our results. We have also included data from other assemblers not mentioned in the paper to facilitate comparison. If you have different assembly methods that you would like to share, we are happy to include them here. Please do a GitHub pull request with your results or create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
 
 
 
@@ -16,7 +16,7 @@ Here you will find the scripts used to generate our data and figures, links to t
 * [Trimmed ONT reads](https://figshare.com/articles/Trimmed_ONT_reads/5170852)
 * [Subsampled ONT reads](https://figshare.com/articles/Subsampled_ONT_reads/5171491)
 
-I did not put the ONT fast5 files on figshare due to their size (157 GB before basecalling, 1.5TB after basecalling). If anybody is interested in these, please contact me and we can try to work something out.
+I did not put the ONT fast5 files on figshare due to their size (157 GB before basecalling and 1.5TB after basecalling). If you are interested in these, please contact me and we can try to work something out.
 
 
 
@@ -85,7 +85,7 @@ The [trimmed Illumina reads](https://figshare.com/articles/Trimmed_Illumina_read
 
 #### Polishing with Nanopolish
 
-We used Nanopolish on the ONT-only assemblies to get their base-level accuracy as high as possible:
+We used Nanopolish to get the most accurate possible ONT-only assemblies:
 * `python nanopolish_makerange.py draft.fa | parallel --results nanopolish.results -P 8 nanopolish variants --consensus polished.{1}.fa -w {1} -r reads.fa -b reads.sorted.bam -g draft.fa -t 4 --min-candidate-frequency 0.1`
 * `python nanopolish_merge.py polished.*.fa > polished_genome.fa`
 
@@ -97,26 +97,24 @@ We tried a second round of Nanopolish but found that it did not significantly ch
 
 ## Error rate estimation
 
-The files in the [error_rate_estimation](error_rate_estimation) directory were used to get our error rate estimates for assemblies.
-
-To estimate error rates, we...
-* assembled each sample separately using both [Velvet](https://www.ebi.ac.uk/~zerbino/velvet/) and [ABySS](https://github.com/bcgsc/abyss) ([assemblies_for_error_rate_estimation.sh](error_rate_estimation/assemblies_for_error_rate_estimation.sh)). These were chosen as assemblers independent from the ones we are assessing.
-* used [MUMmer](http://mummer.sourceforge.net/) to extract only large (10+ kbp) contigs where Velvet and ABySS were in perfect agreement ([make_sample_reference_fasta.sh](error_rate_estimation/make_sample_reference_fasta.sh)).
+The files in the [error_rate_estimation](error_rate_estimation) directory were used to get error rate estimates for assemblies. We...
+* assembled each sample separately using both [Velvet](https://www.ebi.ac.uk/~zerbino/velvet/) and [ABySS](https://github.com/bcgsc/abyss) ([assemblies_for_error_rate_estimation.sh](error_rate_estimation/assemblies_for_error_rate_estimation.sh)). These were chosen as independent assemblers from the ones we are assessing.
+* used [MUMmer](http://mummer.sourceforge.net/) to extract only large (10+ kbp) contigs where Velvet and ABySS were in perfect agreement ([make_sample_reference_fasta.sh](error_rate_estimation/make_sample_reference_fasta.sh)). The reference contigs made in this process can be downloaded [here](https://figshare.com/articles/Reference_contigs_for_error_rate_estimation/5172487).
 * BLASTed the assemblies using these contigs, keeping only the best hit per contig and averaged the error rate over the hits ([assembly_accuracies.sh](error_rate_estimation/assembly_accuracies.sh)).
 
-The reference contigs made in this process can be downloaded [here](https://figshare.com/articles/Reference_contigs_for_error_rate_estimation/5172487). By using only large (10+ kbp) contigs, this method only covers non-repetitive DNA. Error rates in repetitive regions will possibly be higher.
+By using only large (10+ kbp) contigs, this method only covers non-repetitive DNA. Error rates in repetitive regions will possibly be higher.
 
 
 
 ## Depth per replicon
 
-The files in the [depth_per_replicon](depth_per_replicon) directory were used to generate the Figure S4 which shows the read depth for each plasmid, relative to the chromosomal depth, for both Illumina and ONT reads.
+The files in the [depth_per_replicon](depth_per_replicon) directory were used to generate Figure S4 which shows the read depth for each plasmid, relative to the chromosomal depth, for both Illumina and ONT reads. It shows that small plasmids are very underrepresented in ONT reads.
 
 
 
 ## Result table
 
-The [results.xlsx](results.xlsx) file contains information on all read sets and statistics on each assembly.
+The [results.xlsx](results.xlsx) file contains statistics on each read set and assembly. The summaries below were taken from this table.
 
 
 
@@ -165,10 +163,8 @@ As expected for short reads, neither assembler was very good at completing large
 
 #### Links to assemblies
 
-* [Canu v1.5 (f356c2c)](https://figshare.com/articles/Canu_v1_5_f356c2c_assemblies_ONT-only_/5165833)
-* [Canu v1.5 (f356c2c) + Nanopolish v0.7.0](https://figshare.com/articles/Canu_v1_5_f356c2c_Nanopolish_v0_7_0_assemblies_ONT-only_/5165845)
-* [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_ONT-only_/5170747)
-* [Unicycler v0.4.0 + Nanopolish v0.7.0](https://figshare.com/articles/Unicycler_v0_4_0_Nanopolish_v0_7_0_assemblies_ONT-only_/5170753)
+* Canu v1.5 (f356c2c): [before Nanopolish](https://figshare.com/articles/Canu_v1_5_f356c2c_assemblies_ONT-only_/5165833) and [after Nanopolish](https://figshare.com/articles/Canu_v1_5_f356c2c_Nanopolish_v0_7_0_assemblies_ONT-only_/5165845)
+* Unicycler v0.4.0 [before Nanopolish](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_ONT-only_/5170747) and [after Nanopolish](https://figshare.com/articles/Unicycler_v0_4_0_Nanopolish_v0_7_0_assemblies_ONT-only_/5170753)
 
 #### Metrics
 
@@ -183,7 +179,7 @@ As expected for short reads, neither assembler was very good at completing large
 
 Neither Canu nor Unicycler was particular good recovering small plasmids. This is probably because the small plasmids are very underrepresented in the ONT reads. Unicycler did manage to assemble a few small plasmids and Canu didn't get any. Altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may help.
 
-The estimated error rates for both Canu and Unicycler are much higher than Illumina-only assemblies: near 1% (i.e. one error per 100 bp in the assembly). Unicycler's error rates were slightly lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies. Nanopolish was able to repair about half of the errors.
+The estimated error rates for both Canu and Unicycler are much higher than Illumina-only assemblies: near 1% (i.e. one error per ~100 bp in the assembly). Unicycler's error rates were slightly lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies. Nanopolish was able to repair about half of the errors.
 
 
 
@@ -198,11 +194,7 @@ The estimated error rates for both Canu and Unicycler are much higher than Illum
 #### Links to assemblies
 
 * [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_hybrid_Illumina_and_ONT_/5165842)
-* [Canu v1.5 (f356c2c) + 1x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756)
-* [Canu v1.5 (f356c2c) + 2x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_2_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170759)
-* [Canu v1.5 (f356c2c) + 3x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_3_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170762)
-* [Canu v1.5 (f356c2c) + 4x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_4_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170765)
-* [Canu v1.5 (f356c2c) + 5x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_5_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170771)
+* Canu v1.5 (f356c2c): [one round of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756), [two rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_2_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170759), [three rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_3_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170762), [four rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_4_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170765), [five rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_5_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170771)
 * [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_hybrid_Illumina_and_ONT_/5170750)
 
 #### Metrics
