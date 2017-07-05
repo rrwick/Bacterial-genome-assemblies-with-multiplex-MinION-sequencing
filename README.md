@@ -29,7 +29,7 @@ The [ONT_barcode_basecalling_and_assembly.sh](ONT_barcode_basecalling_and_assemb
 * Assembling Illumina-only read sets (with SPAdes and Unicycler)
 * Assembling ONT-only read sets (with Canu and Unicycler)
 * Assembling hybrid read sets (with SPAdes, Canu+Pilon and Unicycler)
-* Polishing ONT-only assemblies with [Nanopolish](https://github.com/jts/nanopolish)
+* Polishing ONT-only assemblies with Nanopolish
 
 Each of these steps can be turned on/off using the variables at the top of the script. Details for some of the steps are described below.
 
@@ -41,7 +41,7 @@ Each of these steps can be turned on/off using the variables at the top of the s
 * [Porechop](https://github.com/rrwick/Porechop): v0.2.1
 * [Unicycler](https://github.com/rrwick/Unicycler): v0.4.0
 * [Canu](http://canu.readthedocs.io/en/latest/): [snapshot v1.5 +54 changes](https://github.com/marbl/canu/tree/f356c2c3f2eb37b53c4e7bf11e927e3fdff4d747)
-* [SPades](http://cab.spbu.ru/software/spades/): v3.10.1
+* [SPAdes](http://cab.spbu.ru/software/spades/): v3.10.1
 * [Pilon](https://github.com/broadinstitute/pilon): v1.22
 * [Nanopolish](https://github.com/jts/nanopolish): v0.7.0
 
@@ -50,7 +50,7 @@ Each of these steps can be turned on/off using the variables at the top of the s
 
 When basecalling ONT reads using Albacore (ONT's command-line basecaller), we used the `--barcoding` option to sort the reads into barcode bins. We then ran [Porechop](https://github.com/rrwick/Porechop) on each bin to remove adapter sequences and discard chimeric reads.
 
-When running Porechop we used its barcode binning as well so we could keep only reads where both Albacore and Porechop agreed on the barcode bin. For example, Albacore put 95064 reads in the bin for barcode 1. Of these reads, Porechop put 90919 in the barcode 1 bin, 118 reads into bins for other barcodes, 3941 reads into no bin and 86 reads were discarded as chimeras. By using only the 90919 reads where Albacore and Porechop agree, minimised barcode cross-contamination.
+When running Porechop we used its barcode binning as well so we could keep only reads where both Albacore and Porechop agreed on the barcode bin. For example, Albacore put 95064 reads in the bin for barcode 1. Of these, Porechop put 90919 in the barcode 1 bin, 118 reads into bins for other barcodes, 3941 reads into no bin and 86 reads were discarded as chimeras. By using only the 90919 reads where Albacore and Porechop agree, minimised barcode cross-contamination.
 
 All reads shorter than 2 kbp were discarded for each sample – due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality – specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
 
@@ -141,7 +141,7 @@ The [results.xlsx](results.xlsx) file contains statistics on each read set and a
 * Mean contigs: the number of contigs in the assembly, averaged over all 12 samples (fewer is better).
 * Mean N50: the assembly N50, averaged over all 12 samples (bigger is better).
     * Illumina-only assemblies of bacterial genomes are almost never complete, so this value is much less than the chromosome size.
-* Complete large/small plasmids: how many plasmids completely assembled into a single contig, totaled over all 12 samples.
+* Complete large/small plasmids: how many plasmids completely assembled into a single contig, totalled over all 12 samples.
     * For Unicycler, we defined "completely assembled" as the plasmid being circularised in the graph (i.e. has a link joining its start and end).
     * The complete plasmid counts aren't available for SPAdes, as it outputs its final assembly in contig form (not as a graph) so there's no simple _de novo_ way to tell if a contig is a complete replicon.
     * Large plasmids were defined as over 10 kbp (though there were no plasmids between 7 and 60 kbp).
@@ -176,7 +176,7 @@ As expected for short reads, neither assembler was very good at completing large
 
 * Mean N50: as described above.
     * When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
-* Complete chromosomes: how many chromosomes completely assembled into a single contig, totaled over all 12 samples.
+* Complete chromosomes: how many chromosomes completely assembled into a single contig, totalled over all 12 samples.
     * For both Unicycler and Canu, we defined "completely assembled" as the chromosome being circularised in the graph.
 * Complete large/small plasmids: as described above
 * Estimated error rate: as described above
