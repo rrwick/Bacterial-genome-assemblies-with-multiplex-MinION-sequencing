@@ -1,4 +1,5 @@
 <p align="center"><img src="logo.png" alt="Bacterial genome assemblies with multiplex-MinION sequencing"></p>
+
 # Completing bacterial genome assemblies with multiplex MinION sequencing
 
 This repository contains supplemental data and code for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
