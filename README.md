@@ -52,7 +52,7 @@ When basecalling ONT reads using Albacore (ONT's command-line basecaller), we us
 
 When running Porechop we used its barcode binning as well so we could keep only reads where both Albacore and Porechop agreed on the barcode bin. For example, Albacore put 95064 reads in the bin for barcode 1. Of these reads, Porechop put 90919 in the barcode 1 bin, 118 reads into bins for other barcodes, 3941 reads into no bin and 86 reads were discarded as chimeras. By using only the 90919 reads where Albacore and Porechop agree, minimised barcode cross-contamination.
 
-All reads shorter than 2 kbp were discarded for each sample - due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality - specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
+All reads shorter than 2 kbp were discarded for each sample – due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality – specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
 
 
 #### Illumina-only assembly
@@ -122,12 +122,12 @@ The [results.xlsx](results.xlsx) file contains information on all read sets and 
 
 ## Results: Illumina-only assemblies
 
-| Assembler | Mean contigs | Mean N50 | Complete large plasmids | Complete small plasmids |
-| :-------: | -----------: | -------: | ----------------------: | ----------------------: |
-| SPAdes    |        379.1 |  218,479 |                     n/a |                     n/a |
-| Unicycler |        191.8 |  293,648 |                  2 / 28 |                 12 / 29 |
+| Assembler | Mean contigs | Mean N50 | Complete large plasmids | Complete small plasmids | Estimated error rate |
+| :-------: | -----------: | -------: | ----------------------: | ----------------------: | -------------------: |
+| SPAdes    |        379.1 |  218,479 |                     n/a |                     n/a |               0.000% |
+| Unicycler |        191.8 |  293,648 |                  2 / 28 |                 12 / 29 |               0.000% |
 
-#### Links
+#### Links to assemblies
 
 * [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_Illumina-only_/5165836)
 * [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_Illumina-only_/5170744)
@@ -135,22 +135,24 @@ The [results.xlsx](results.xlsx) file contains information on all read sets and 
 #### Metrics
 
 * Mean contigs: the number of contigs in the assembly, averaged over all 12 samples (fewer is better).
-* Mean N50: the assembly N50, averaged over all 12 samples (bigger is better). Illumina-only assemblies almost never complete on their own, so this value is much less than the chromosome size.
+* Mean N50: the assembly N50, averaged over all 12 samples (bigger is better).
+    * Illumina-only assemblies of bacterial genomes are almost never complete, so this value is much less than the chromosome size.
 * Complete large/small plasmids: how many plasmids completely assembled into a single contig, totaled over all 12 samples.
-    * For Unicycler, "completely assembled"'" means the plasmid is circularised in the graph (i.e. has a link joining its start and end).
+    * For Unicycler, we defined "completely assembled" as the plasmid being circularised in the graph (i.e. has a link joining its start and end).
     * The complete plasmid counts aren't available for SPAdes, as it outputs its final assembly in contig form (not as a graph) so there's no simple _de novo_ way to tell if a contig is a complete replicon.
     * Large plasmids were defined as over 10 kbp (though there were no plasmids between 7 and 60 kbp).
     * The total number of plasmids in the 12 isolates (28 large, 29 small) was determined from the manually-completed assemblies.
+* Estimated error rate: estimate of the assembly's base-level error rate – method described above
 
 #### Conclusions
 
-Overall, Unicycler and SPAdes perform similarly when assembling the Illumina reads. It's worth remembering here that Unicycler uses SPAdes to assemble Illumina reads.
+Overall, Unicycler and SPAdes perform similarly when assembling the Illumina reads – not surprising, since Unicycler uses SPAdes to assemble Illumina reads. Unicycler achieves slightly better values because it uses a wider k-mer range than SPAdes does by default. Experimenting with larger values for SPAdes' `-k` option would probably give results close to Unicycler's.
 
-The SPAdes mean contig count is greatly inflated by sample INF163 which has some low-depth contamination (which makes contigs in the SPAdes assembly but is filtered out in the Unicycler assembly). Excluding that sample, the mean contig count for SPAdes is 213.7, much closer to Unicycler's value.
+Both Unicycler and SPAdes had no measurable error rate. These means that their assemblies are in complete agreement with ABySS and Velvet for the non-repetitive sequences assessed. This strong agreement between different assemblers supports our assumption that Illumina-only assemblies have essentially perfect base-level accuracy (at least for non-repetitive sequence).
 
-Unicycler achieves somewhat better N50 values because it uses a wider k-mer range than SPAdes does by default. Experimenting with larger values for SPAdes' `-k` option would probably result in N50 values like Unicycler's.
+The SPAdes mean contig count is greatly inflated by sample INF163 which has some low-depth contamination. The SPAdes assembly has many contigs from this contamination, but they are filtered out in the Unicycler assembly. Excluding that sample, the mean contig count for SPAdes is 213.7, much closer to Unicycler's value.
 
-As expected for short reads, neither assembler was very good at completing large plasmids, as they usually contained shared sequence with other replicons. Even though exact completed-plasmid counts aren't available for SPAdes, it seemed to perform similarly to Unicycler on small plasmids - assembling them into single contigs when they only contain unique sequence, assembling them into incomplete contigs when they share sequence with each other.
+As expected for short reads, neither assembler was very good at completing large plasmids, as they usually contained shared sequence with other replicons. Even though exact completed-plasmid counts aren't available for SPAdes, it seemed to perform similarly to Unicycler on small plasmids – assembling them into single contigs when they only contain unique sequence, assembling them into incomplete contigs when they share sequence with each other.
 
 
 
@@ -159,9 +161,9 @@ As expected for short reads, neither assembler was very good at completing large
 | Assembler | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
 | :-------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------------------------------: | -------------------------------------: |
 | Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                                1.224% |                                 0.670% |
-| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.021% 
+| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.021% |                                 0.619% |
 
-#### Links
+#### Links to assemblies
 
 * [Canu v1.5 (f356c2c)](https://figshare.com/articles/Canu_v1_5_f356c2c_assemblies_ONT-only_/5165833)
 * [Canu v1.5 (f356c2c) + Nanopolish v0.7.0](https://figshare.com/articles/Canu_v1_5_f356c2c_Nanopolish_v0_7_0_assemblies_ONT-only_/5165845)
@@ -170,16 +172,18 @@ As expected for short reads, neither assembler was very good at completing large
 
 #### Metrics
 
-* Mean N50: as described above. When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
-* Complete chromosomes: how many chromosomes completely assembled into a single contig, totaled over all 12 samples. For both Unicycler and Canu, 'completely assembled' means the chromosome is circularised in the graph.
+* Mean N50: as described above.
+    * When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
+* Complete chromosomes: how many chromosomes completely assembled into a single contig, totaled over all 12 samples.
+    * For both Unicycler and Canu, we defined "completely assembled" as the chromosome being circularised in the graph.
 * Complete large/small plasmids: as described above
-* Estimated error rate: estimate of the assembly's base-level error rate - method described above.|                                 0.619% |
+* Estimated error rate: as described above
 
 #### Conclusions
 
-Neither Canu nor Unicycler was particular good recovering small plasmids. This may be because the small plasmids are very underrepresented in the ONT reads. Unicycler did manage to assemble a few small plasmids. Canu didn't get any, but altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may help.
+Neither Canu nor Unicycler was particular good recovering small plasmids. This is probably because the small plasmids are very underrepresented in the ONT reads. Unicycler did manage to assemble a few small plasmids and Canu didn't get any. Altering Canu's settings as described [here](http://canu.readthedocs.io/en/latest/faq.html#why-is-my-assembly-is-missing-my-favorite-short-plasmid) may help.
 
-The estimated error rates of Unicycler's assemblies were lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies.
+The estimated error rates for both Canu and Unicycler are much higher than Illumina-only assemblies: near 1% (i.e. one error per 100 bp in the assembly). Unicycler's error rates were slightly lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies. Nanopolish was able to repair about half of the errors.
 
 
 
@@ -191,7 +195,7 @@ The estimated error rates of Unicycler's assemblies were lower than Canu's, prob
 | Canu+Pilon | 4,831,660 |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |              0.0058% |
 | Unicycler  | 5,334,509 |              12 / 12 |                 28 / 28 |                 18 / 29 |        7 / 12 |              0.0000% |
 
-#### Links
+#### Links to assemblies
 
 * [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_hybrid_Illumina_and_ONT_/5165842)
 * [Canu v1.5 (f356c2c) + 1x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756)
@@ -205,16 +209,17 @@ The estimated error rates of Unicycler's assemblies were lower than Canu's, prob
 
 * Mean N50: as described above
 * Complete chromosomes: as described above
+    * As was the case for Illumina-only assemblies, SPAdes doesn't provide its final assembly in graph form and it was therefore excluded from the "complete" counts.
+    * Since the Canu+Pilon assemblies are polished versions of the Canu ONT-only assemblies, their "complete" counts are identical to those for the Canu ONT-only assemblies.
 * Complete large/small plasmids: as described above
 * 100% complete: how many of the assemblies have a complete chromosome and all plasmids are complete.
 * Estimated error rate: as described above
 
 #### Conclusions
 
-As was the case for Illumina-only assemblies, SPAdes doesn't provide its final assembly in graph form and it is difficult to tell whether or not a contig represents a complete replicon. It was therefore excluded from the 'complete' counts. SPAdes' N50 values reflect that it often but not always assembled the chromosome into a single contig.
+Unicycler does quite well here because hybrid assemblies are its primary focus. Of its five assemblies which were not 100% complete, four were due to incomplete small plasmids (underrepresented in the ONT reads). The remaining incomplete assembly (sample INF164) was due to a discrepancy between the Illumina and ONT reads – an 18 kbp sequence was present in the Illumina sample but absent in the ONT sample, causing an incomplete component in the assembly graph. This was most likely caused by a biological change between cultures used for DNA extraction.
 
-Since the Canu+Pilon assemblies are polished versions of the Canu ONT-only assemblies, the Canu+Pilon 'complete' counts are the same as for the Canu ONT-only assemblies. The mean N50 for Canu+Pilon is slightly higher than it was for Canu, revealing that Pilon is inserting bases more often than removing them.
+Unicycler and SPAdes both produce their hybrid assemblies by scaffolding an Illumina-only assembly graph. This explains why their error rates are as low as the Illumina-only assemblies.
 
-Unicycler does quite well here because hybrid assemblies are its primary focus. Of its five assemblies which did not complete 100%, four were due to incomplete small plasmids. Small plasmids were very underrepresented in the ONT reads, and Unicycler failed to separate small plasmids with shared sequence. The remaining incomplete assembly (sample INF164) was due to a discrepancy between the Illumina and ONT reads - an 18 kbp sequence was present in the Illumina sample but absent in the ONT sample, causing an incomplete component in the assembly graph.
+The values shown here are after five rounds of Pilon polishing, though the error rate plateaued after three rounds, so that would probably be sufficient. The Canu+Pilon error rate never got as low as the SPAdes/Unicycler error rate, indicating that Pilon could correct most but not all errors in the ONT-only assembly.
 
-The estimated error rates are low for all hybrid assembly methods. The Canu+Pilon error rate decreased with the first couple rounds of Pilon polishing but plateaued after 3-4 rounds. The values shown here are after 5 rounds of Pilon polishing. Interestingly, the Canu+Pilon error rate never got as low as the SPAdes/Unicycler error rate, implying that Pilon did not correct all ONT consensus errors.
