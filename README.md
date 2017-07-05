@@ -112,6 +112,12 @@ The files in the [depth_per_replicon](depth_per_replicon) directory were used to
 
 
 
+## ONT-only error rates
+
+The files in the [nanopore_only_error_rates](nanopore_only_error_rates) were used to generate Figure S3 which shows Canu error rates (before and after Nanopolish) against ONT read depth.
+
+
+
 ## Result table
 
 The [results.xlsx](results.xlsx) file contains statistics on each read set and assembly. The summaries below were taken from this table.
@@ -194,7 +200,7 @@ The estimated error rates for both Canu and Unicycler are much higher than Illum
 #### Links to assemblies
 
 * [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_hybrid_Illumina_and_ONT_/5165842)
-* Canu v1.5 (f356c2c): [one round of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756), [two rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_2_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170759), [three rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_3_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170762), [four rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_4_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170765), [five rounds of Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_5_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170771)
+* Canu v1.5 (f356c2c): [1x Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756), [2x Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_2_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170759), [3x Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_3_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170762), [4x Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_4_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170765), [5x Pilon](https://figshare.com/articles/Canu_v1_5_f356c2c_5_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170771)
 * [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_hybrid_Illumina_and_ONT_/5170750)
 
 #### Metrics
