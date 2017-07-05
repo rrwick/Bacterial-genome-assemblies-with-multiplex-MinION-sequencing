@@ -2,21 +2,22 @@
 
 # Completing bacterial genome assemblies with multiplex MinION sequencing
 
-This repository contains supplemental data and code for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing
-](https://sdfosidhfsidfjaosdjiodifjodifjsdof).
+This repository contains supplemental data and code for our paper: Completing bacterial genome assemblies with multiplex MinION sequencing.
 
-Here you will find the scripts used to generate our data, links to the reads and assemblies, scripts used to generate figures, and summaries of our results. We have also included results from other assemblers not mentioned in the paper to facilitate comparison. If you have different assembly methods that you would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
+Here you will find the scripts used to generate our data and figures, links to the reads and assemblies, and summaries of our results. We have also included results from other assemblers not mentioned in the paper to facilitate comparison. If you have different assembly methods that you would like to share, we are happy to include the results here! You can do a GitHub pull-request with your results or else create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
+
 
 
 ## Links to read data
 
-* [Raw Illumina reads (before trimming)](https://figshare.com/)
-* [Trimmed Illumina reads](https://figshare.com/)
-* [Basecalled ONT reads (straight out of Albacore)](https://figshare.com/)
-* [Trimmed ONT reads](https://figshare.com/)
-* [Subsampled ONT reads](https://figshare.com/)
+* [Raw Illumina reads (before trimming)](https://figshare.com/articles/Raw_Illumina_reads/5170816)
+* [Trimmed Illumina reads](https://figshare.com/articles/Trimmed_Illumina_reads/5170831)
+* [Basecalled ONT reads (straight out of Albacore)](https://figshare.com/articles/Basecalled_ONT_reads/5170843)
+* [Trimmed ONT reads](https://figshare.com/articles/Trimmed_ONT_reads/5170852)
+* [Subsampled ONT reads](https://figshare.com/articles/Subsampled_ONT_reads/5171491)
 
 I did not put the ONT fast5 files on figshare due to their size (157 GB before basecalling, 1.5TB after basecalling). If anybody is interested in these, please contact me and we can try to work something out.
+
 
 
 ## Basecalling and assembly
@@ -35,6 +36,7 @@ Each of these steps can be turned on/off using the variables at the top of the s
 
 #### Software versions used
 
+* [Trim Galore](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/): v0.4.4
 * Albacore: v1.1.2
 * [Porechop](https://github.com/rrwick/Porechop): v0.2.1
 * [Unicycler](https://github.com/rrwick/Unicycler): v0.4.0
@@ -58,20 +60,31 @@ Notably, when running Porechop we used its barcode binning as well. This was so 
 All reads shorter than 2 kbp were discarded for each sample - due to the long read N50s this was a very small proportion of the reads. For samples which still had more than 500 Mbp of reads, we subsampled the read set down to 500 Mbp. This was done using read quality - specifically the reads' minimum qscore over a sliding window. This means that the discarded reads were the one which had the lowest quality regions, as indicated by their qscores. This was done with the `fastq_to_fastq.py` script in [this repo](https://github.com/rrwick/Fast5-to-Fastq).
 
 
-#### Illumina-only assembly commands
+#### Illumina-only assembly
+
+We used the [trimmed Illumina reads](https://figshare.com/articles/Trimmed_Illumina_reads/5170831) as input for SPAdes and Unicycler.
+
+Commands:
 * SPAdes: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir --careful`
 * Unicycler: `unicycler -1 short_1.fastq.gz -2 short_2.fastq.gz -o out_dir`
 
 For SPAdes, the `contigs.fasta` file was taken as the final assembly.
 
 
-#### ONT-only assembly commands
+#### ONT-only assembly
+
+The [subsampled ONT reads](https://figshare.com/articles/Subsampled_ONT_reads/5171491) were used as input for Canu and Unicycler.
+
+Commands:
 * Canu: `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
 * Unicycler: `unicycler -l long.fastq.gz -o out_dir`
-* Nanopolish: `python nanopolish_makerange.py draft.fa | parallel --results nanopolish.results -P 8 nanopolish variants --consensus polished.{1}.fa -w {1} -r reads.fa -b reads.sorted.bam -g draft.fa -t 4 --min-candidate-frequency 0.1; python nanopolish_merge.py polished.*.fa > polished_genome.fa`
 
 
-#### Hybrid assembly commands
+#### Hybrid assembly
+
+The [trimmed Illumina reads](https://figshare.com/articles/Trimmed_Illumina_reads/5170831) and [subsampled ONT reads](https://figshare.com/articles/Subsampled_ONT_reads/5171491) were used as input for all hybrid assemblies.
+
+Commands:
 * SPAdes: `spades.py -1 short_1.fastq.gz -2 short_2.fastq.gz --nanopore long.fastq.gz -o out_dir --careful`
 * Canu+Pilon:
   * `canu -p canu -d out_dir genomeSize=5.5m -nanopore-raw long.fastq.gz`
@@ -83,44 +96,47 @@ For SPAdes, the `contigs.fasta` file was taken as the final assembly.
 
 #### Polishing with Nanopolish
 
-We used Nanopolish on the ONT-only assemblies to get their base-level accuracy as high as possible. For this step we used _all_ ONT reads for which Albacore and Porechop agreed on the barcode bin (before the read sets were subsampled to 500 Mbp). After using `nanopolish extract` to produce a fasta file from Albacore's output directory, we used [this script](nanopolish_read_filter.py) to exclude reads where Porechop disagreed on the bin.
+We used Nanopolish on the ONT-only assemblies to get their base-level accuracy as high as possible. For this step we used the full set of [trimmed ONT reads](https://figshare.com/articles/Trimmed_ONT_reads/5170852) (before the read sets were subsampled). After using `nanopolish extract` to produce a fasta file from Albacore's output directory, we used [this script](nanopolish_read_filter.py) to exclude reads where Porechop disagreed on the bin.
 
-We tried a second round of Nanopolish but found that it barely improved the results, so the values here are for a single round of Nanopolish.
+Commands:
+* `python nanopolish_makerange.py draft.fa | parallel --results nanopolish.results -P 8 nanopolish variants --consensus polished.{1}.fa -w {1} -r reads.fa -b reads.sorted.bam -g draft.fa -t 4 --min-candidate-frequency 0.1`
+* `python nanopolish_merge.py polished.*.fa > polished_genome.fa`
 
-
-## Depth per replicon
-
-The files in the [depth_per_replicon](depth_per_replicon) directory were used to generate the supplementary figure showing the read depth for each replicon. This demonstrates that small plasmids were very underrepresented in the ONT reads.
+We tried a second round of Nanopolish but found that it barely changed the results, so here we only report results from a single round of Nanopolish.
 
 
 
 ## Error rate estimation
 
-To estimate error rates, we:
-* took the 25 largest contigs from Unicycler's Illumina-only assembly
-* trimmed 1 kbp off each end
-* BLASTed the assemblies using these contigs, keeping only the best hit per contig
+The files in the [error_rate_estimation](error_rate_estimation) directory were used to get our error rate estimates for assemblies.
+
+To estimate error rates, we...
+* assembled each sample separately using both [Velvet](https://www.ebi.ac.uk/~zerbino/velvet/) and [ABySS](https://github.com/bcgsc/abyss) (`assemblies_for_error_rate_estimation.sh`). These were chosen as assemblers independent from the ones we are assessing.
+* used [MUMmer](http://mummer.sourceforge.net/) to extract only large (10+ kbp) contigs where Velvet and ABySS were in perfect agreement (`make_sample_reference_fasta.sh`).
+* BLASTed the assemblies using these contigs, keeping only the best hit per contig and averaged the error rate over the hits (`assembly_accuracies.sh`).
 * Averaged the error rate over the hits
 
-The code to carry this out is in the [error_rate_estimation](error_rate_estimation) directory.
+The reference contigs made in this process can be downloaded [here](https://figshare.com/articles/Reference_contigs_for_error_rate_estimation/5172487). By using only large (10+ kbp) contigs, this method for error rate estimation only covers non-repetitive DNA. Error rates in repetitive regions will possibly be higher.
 
-We used this method because we trust the base calls in an Illumina-only assembly for non-repetitive sequence. By taking only the largest Illumina-only contigs, we avoid repeat sequences. Since these contigs usually end in repeat sequences (repeats being the most common contig-length-limiting feature for Illumina-only assembly), we trim off a kilobase of sequence to ensure our test sequences are not too close to a repeat.
 
-This method for error rate estimation therefore only covers non-repetitive DNA. Error rates in repetitive regions will possibly be higher.
+
+## Depth per replicon
+
+The files in the [depth_per_replicon](depth_per_replicon) directory were used to generate the Figure S4 which shows the read depth for each plasmid, relative to the chromosomal depth, for both Illumina and ONT reads.
 
 
 
 ## Result table
 
-
+The file [results.xlsx](results.xlsx) file contains information on all read sets and statistics on each assembly.
 
 
 
 ## Results: Illumina-only assemblies
 
 Links:
-* [SPAdes v3.10.1](https://figshare.com/)
-* [Unicycler v0.4.0](https://figshare.com/)
+* [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_Illumina-only_/5165836)
+* [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_Illumina-only_/5170744)
 
 Metrics:
 * Mean contigs: the number of contigs in the assembly, averaged over all 12 samples (fewer is better).
@@ -141,13 +157,14 @@ Unicycler achieves somewhat better N50 values because it uses a wider k-mer rang
 As expected for short reads, neither assembler was very good at completing large plasmids, as they usually contained shared sequence with other replicons. Even though exact completed-plasmid counts aren't available for SPAdes, it seemed to perform similarly to Unicycler on small plasmids - assembling them into single contigs when they only contain unique sequence, assembling them into incomplete contigs when they share sequence with each other.
 
 
+
 ## Results: ONT-only assemblies
 
 Links:
-* [Canu v1.5 (f356c2c)](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + Nanopolish v0.7.0](https://figshare.com/)
-* [Unicycler v0.4.0](https://figshare.com/)
-* [Unicycler v0.4.0 + Nanopolish v0.7.0](https://figshare.com/)
+* [Canu v1.5 (f356c2c)](https://figshare.com/articles/Canu_v1_5_f356c2c_assemblies_ONT-only_/5165833)
+* [Canu v1.5 (f356c2c) + Nanopolish v0.7.0](https://figshare.com/articles/Canu_v1_5_f356c2c_Nanopolish_v0_7_0_assemblies_ONT-only_/5165845)
+* [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_ONT-only_/5170747)
+* [Unicycler v0.4.0 + Nanopolish v0.7.0](https://figshare.com/articles/Unicycler_v0_4_0_Nanopolish_v0_7_0_assemblies_ONT-only_/5170753)
 
 Metrics:
 * Mean N50: as described above. When an assembly completes the chromosome sequence, that will be the assembly N50 (about 5.3 Mbp in these samples).
@@ -165,16 +182,17 @@ Neither Canu nor Unicycler was particular good recovering small plasmids. This m
 The estimated error rates of Unicycler's assemblies were lower than Canu's, probably due to its repeated application of [Racon](https://github.com/isovic/racon) to the assembly. Running Racon on Canu's assembly would most likely result in a similar error rate to Unicycler's assemblies.
 
 
+
 ## Results: hybrid assemblies
 
 Links:
-* [SPAdes v3.10.1](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + 1x Pilon v1.22](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + 2x Pilon v1.22](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + 3x Pilon v1.22](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + 4x Pilon v1.22](https://figshare.com/)
-* [Canu v1.5 (f356c2c) + 5x Pilon v1.22](https://figshare.com/)
-* [Unicycler v0.4.0](https://figshare.com/)
+* [SPAdes v3.10.1](https://figshare.com/articles/SPAdes_v3_10_1_assemblies_hybrid_Illumina_and_ONT_/5165842)
+* [Canu v1.5 (f356c2c) + 1x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_1_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170756)
+* [Canu v1.5 (f356c2c) + 2x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_2_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170759)
+* [Canu v1.5 (f356c2c) + 3x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_3_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170762)
+* [Canu v1.5 (f356c2c) + 4x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_4_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170765)
+* [Canu v1.5 (f356c2c) + 5x Pilon v1.22](https://figshare.com/articles/Canu_v1_5_f356c2c_5_x_Pilon_v1_22_assemblies_hybrid_Illumina_and_ONT_/5170771)
+* [Unicycler v0.4.0](https://figshare.com/articles/Unicycler_v0_4_0_assemblies_hybrid_Illumina_and_ONT_/5170750)
 
 Metrics:
 * Mean N50: as described above
@@ -189,11 +207,10 @@ Metrics:
 | Canu+Pilon | 4,831,660 |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |              0.0058% |
 | Unicycler  | 5,334,509 |              12 / 12 |                 28 / 28 |                 18 / 29 |        7 / 12 |              0.0000% |
 
-As was the case for Illumina-only assemblies, since SPAdes doesn't provide its final assembly in graph form, it is difficult to tell whether or not a contig represents a complete replicon. It was therefore excluded from the 'complete' counts. SPAdes' N50 values reflect that it often but not always assembled the chromosome into a single contig.
+As was the case for Illumina-only assemblies, SPAdes doesn't provide its final assembly in graph form and it is difficult to tell whether or not a contig represents a complete replicon. It was therefore excluded from the 'complete' counts. SPAdes' N50 values reflect that it often but not always assembled the chromosome into a single contig.
 
-Since the Canu+Pilon assemblies are polished versions of the Canu ONT-only assemblies, the 'complete' counts are unchanged. The mean N50 for Canu+Pilon is slightly higher than it was for Canu, revealing that Pilon is inserting bases more often than removing them.
+Since the Canu+Pilon assemblies are polished versions of the Canu ONT-only assemblies, the Canu+Pilon 'complete' counts are the same as for the Canu ONT-only assemblies. The mean N50 for Canu+Pilon is slightly higher than it was for Canu, revealing that Pilon is inserting bases more often than removing them.
 
 Unicycler does quite well here because hybrid assemblies are its primary focus. Of its five assemblies which did not complete 100%, four were due to incomplete small plasmids. Small plasmids were very underrepresented in the ONT reads, and Unicycler failed to separate small plasmids with shared sequence. The remaining incomplete assembly (sample INF164) was due to a discrepancy between the Illumina and ONT reads - an 18 kbp sequence was present in the Illumina sample but absent in the ONT sample, causing an incomplete component in the assembly graph.
 
 The estimated error rates are low for all hybrid assembly methods. The Canu+Pilon error rate decreased with the first couple rounds of Pilon polishing but plateaued after 3-4 rounds. The values shown here are after 5 rounds of Pilon polishing. Interestingly, the Canu+Pilon error rate never got as low as the SPAdes/Unicycler error rate, implying that Pilon did not correct all ONT consensus errors.
-
