@@ -128,8 +128,8 @@ The [results.xlsx](results.xlsx) file contains statistics on each read set and a
 
 | Assembler | Mean contigs | Mean N50 | Complete large plasmids | Complete small plasmids | Estimated error rate |
 | :-------: | -----------: | -------: | ----------------------: | ----------------------: | -------------------: |
-| SPAdes    |        379.1 |  218,479 |                     n/a |                     n/a |               0.000% |
-| Unicycler |        191.8 |  293,648 |                  2 / 28 |                 12 / 29 |               0.000% |
+| SPAdes    |        379.1 |  218,479 |                     n/a |                     n/a |              0.0001% |
+| Unicycler |        191.8 |  293,648 |                  2 / 28 |                 12 / 29 |              0.0000% |
 
 #### Links to assemblies
 
@@ -152,7 +152,7 @@ The [results.xlsx](results.xlsx) file contains statistics on each read set and a
 
 Overall, Unicycler and SPAdes perform similarly when assembling the Illumina reads – not surprising, since Unicycler uses SPAdes to assemble Illumina reads. Unicycler achieves slightly better values because it uses a wider k-mer range than SPAdes does by default. Experimenting with larger values for SPAdes' `-k` option would probably give results close to Unicycler's.
 
-Both Unicycler and SPAdes had no measurable error rate. These means that their assemblies are in complete agreement with ABySS and Velvet for the non-repetitive sequences assessed. This strong agreement between different assemblers supports our assumption that Illumina-only assemblies have essentially perfect base-level accuracy (at least for non-repetitive sequence).
+Both Unicycler and SPAdes had extremely low error rates. These means that their assemblies are in very good agreement with ABySS and Velvet for the non-repetitive sequences assessed. This agreement between different assemblers supports our assumption that Illumina-only assemblies have near-perfect base-level accuracy (at least for non-repetitive sequence).
 
 The SPAdes mean contig count is greatly inflated by sample INF163 which has some low-depth contamination. The SPAdes assembly has many contigs from this contamination, but they are filtered out in the Unicycler assembly. Excluding that sample, the mean contig count for SPAdes is 213.7, much closer to Unicycler's value.
 
@@ -164,8 +164,8 @@ As expected for short reads, neither assembler was very good at completing large
 
 | Assembler | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | Estimated error rate (pre-Nanopolish) | Estimated error rate (post-Nanopolish) |
 | :-------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------------------------------: | -------------------------------------: |
-| Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                                1.224% |                                 0.670% |
-| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                                1.021% |                                 0.619% |
+| Canu      | 4,784,356 |               4 / 12 |                 23 / 28 |                  0 / 29 |                               1.2219% |                                0.6681% |
+| Unicycler | 4,965,584 |               7 / 12 |                 27 / 28 |                  5 / 29 |                               1.0164% |                                0.6164% |
 
 #### Links to assemblies
 
@@ -194,7 +194,7 @@ The estimated error rates for both Canu and Unicycler are much higher than Illum
 | Assembler  | Mean N50  | Complete chromosomes | Complete large plasmids | Complete small plasmids | 100% complete | Estimated error rate |
 | :--------: | --------: | -------------------: | ----------------------: | ----------------------: | ------------: | -------------------: |
 | SPAdes     | 4,391,534 |                  n/a |                     n/a |                     n/a |           n/a |              0.0000% |
-| Canu+Pilon | 4,831,660 |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |              0.0058% |
+| Canu+Pilon | 4,831,660 |               4 / 12 |                 23 / 28 |                  0 / 29 |        0 / 12 |              0.0039% |
 | Unicycler  | 5,334,509 |              12 / 12 |                 28 / 28 |                 18 / 29 |        7 / 12 |              0.0000% |
 
 #### Links to assemblies
@@ -219,5 +219,4 @@ Unicycler does quite well here because hybrid assemblies are its primary focus. 
 
 Unicycler and SPAdes both produce their hybrid assemblies by scaffolding an Illumina-only assembly graph. This explains why their error rates are as low as the Illumina-only assemblies.
 
-The values shown here are after five rounds of Pilon polishing, though the error rate plateaued after three rounds, so that would probably be sufficient. The Canu+Pilon error rate never got as low as the SPAdes/Unicycler error rate, indicating that Pilon could correct most but not all errors in the ONT-only assembly.
-
+For Canu+Pilon, the error rates for each of the five rounds of Pilon polishing were: 0.0427, 0.0051, 0.0039, 0.0039 and 0.0039. It plateaued at 0.0039%, suggesting that three rounds of Pilon polishing is sufficient. The error rate never got as low as the SPAdes/Unicycler error rate, indicating that Pilon could correct most but not all errors in the ONT-only assembly. I'm not sure what's causing this and it deserves closer investigation!

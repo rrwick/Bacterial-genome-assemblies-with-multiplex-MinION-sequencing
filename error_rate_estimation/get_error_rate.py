@@ -11,6 +11,11 @@ with open(sys.argv[1], 'rt') as blast_hits:
         percent_identity = float(line_parts[2])
         alignment_length = int(line_parts[3])
 
+        if percent_identity < 95.0:
+            continue
+        if alignment_length < 9000:
+            continue
+
         error_count = round(alignment_length * (100.0 - percent_identity) / 100.0)
 
         total_length += alignment_length
