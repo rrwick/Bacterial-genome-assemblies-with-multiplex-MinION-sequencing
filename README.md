@@ -2,7 +2,7 @@
 
 # Completing bacterial genome assemblies with multiplex MinION sequencing
 
-This repository contains supplemental data and code for our paper: Completing bacterial genome assemblies with multiplex MinION sequencing.
+This repository contains supplemental data and code for our paper: [Completing bacterial genome assemblies with multiplex MinION sequencing](http://www.biorxiv.org/content/early/2017/07/07/160614).
 
 Here you will find scripts used to generate our data and figures, links to the reads and assemblies, and summaries of our results. We have also included data from other assemblers not mentioned in the paper to facilitate comparison. If you have different assembly methods that you would like to share, we are happy to include them here. Please do a GitHub pull request with your results or create an [issue](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing/issues) on this repo.
 
