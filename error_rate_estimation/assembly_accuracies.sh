@@ -3,8 +3,6 @@
 ASSEMBLY_DIR=$1
 ASSEMBLY_NAME=$2
 
-UNICYCLER_ILLUMINA_ASSEMBLIES=10_unicycler_illumina_only_assemblies
-
 echo "Barcode\tAccuracy\tError rate\tDistance between errors"
 
 for BARCODE_NUMBER in 01 02 03 04 05 06 07 08 09 10 11 12; do
